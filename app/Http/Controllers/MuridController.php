@@ -9,6 +9,8 @@ use App\Models\Tahun;
 use App\Models\IsAdmin;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\MuridsImport;
 
 class MuridController extends Controller
 {
@@ -16,16 +18,16 @@ class MuridController extends Controller
      * Display a listing of the resource.
      */
     public function index_input()
-    {        
+    {
         // Verifikasi untuk User yang login apakah dia Admin
-            $verifikasiAdmin = new IsAdmin();
-            $verifikasiAdmin->isAdmin(); 
+        $verifikasiAdmin = new IsAdmin();
+        $verifikasiAdmin->isAdmin();
         // Jika status=1, maka akan lanjut kode di bawah
         // Jika status != 1, maka akan 403 Forbidden
 
         $kelas = Kelas::orderBy('kelas')->get();
         $tahun = Tahun::orderBy('tahun')->get();
-        return view('pages/murid/input', [            
+        return view('pages/murid/input', [
             "title" => "Input Murid",
             "titlepage" => "Input Murid",
             "kelas" => $kelas,
@@ -36,13 +38,13 @@ class MuridController extends Controller
     public function index_daftar()
     {
         // Verifikasi untuk User yang login apakah dia Admin
-            $verifikasiAdmin = new IsAdmin();
-            $verifikasiAdmin->isAdmin(); 
+        $verifikasiAdmin = new IsAdmin();
+        $verifikasiAdmin->isAdmin();
         // Jika status=1, maka akan lanjut kode di bawah
         // Jika status != 1, maka akan 403 Forbidden
 
-        $murid = Murid::with(['kelas','tahun'])->get();
-        return view('pages/murid/daftar', [            
+        $murid = Murid::with(['kelas', 'tahun'])->get();
+        return view('pages/murid/daftar', [
             "title" => "Daftar Murid",
             "titlepage" => "Daftar Murid",
             "murid" => $murid
@@ -63,8 +65,8 @@ class MuridController extends Controller
     public function store(Request $request)
     {
         // Verifikasi untuk User yang login apakah dia Admin
-            $verifikasiAdmin = new IsAdmin();
-            $verifikasiAdmin->isAdmin(); 
+        $verifikasiAdmin = new IsAdmin();
+        $verifikasiAdmin->isAdmin();
         // Jika status=1, maka akan lanjut kode di bawah
         // Jika status != 1, maka akan 403 Forbidden
 
@@ -74,15 +76,15 @@ class MuridController extends Controller
         $validasi = $request->validate([
             'nis' => 'required|integer|unique:murids',
             'nama' => 'required|min:3|max:255',
-            'kelas' => 'required'            
+            'kelas' => 'required'
         ]);
 
         $validasi['kelas_id'] = $kelas_id;
         $validasi['tahun_id'] = $tahun_id;
-        
+
         Murid::create($validasi);
 
-        return redirect('/input-murid')->with('success','');
+        return redirect('/input-murid')->with('success', '');
     }
 
     /**
@@ -90,14 +92,13 @@ class MuridController extends Controller
      */
     public function show(Murid $murid)
     {
-        
     }
 
     public function show_detail(Murid $murid)
     {
         // Verifikasi untuk User yang login apakah dia Admin
-            $verifikasiAdmin = new IsAdmin();
-            $verifikasiAdmin->isAdmin(); 
+        $verifikasiAdmin = new IsAdmin();
+        $verifikasiAdmin->isAdmin();
         // Jika status=1, maka akan lanjut kode di bawah
         // Jika status != 1, maka akan 403 Forbidden
 
@@ -137,26 +138,42 @@ class MuridController extends Controller
     public function destroy(Request $request)
     {
         // Verifikasi untuk User yang login apakah dia Admin
-            $verifikasiAdmin = new IsAdmin();
-            $verifikasiAdmin->isAdmin(); 
+        $verifikasiAdmin = new IsAdmin();
+        $verifikasiAdmin->isAdmin();
         // Jika status=1, maka akan lanjut kode di bawah
         // Jika status != 1, maka akan 403 Forbidden
-        
+
         $getId = $request->murid;
 
         // Hapus data Murid sesuai dengan id-nya
         $validasi = $request->validate([
             'captcha' => 'required|captcha'
         ]);
-        
-            if ($validasi) {  
-                Murid::where('id', $getId)->delete();         
-                return redirect('/daftar-murid')->with('deleted', 'Data Murid berhasil di hapus!.');              
-            } 
-            
-            return redirect('/detail-murid/'.$getId)->with('fail', '');
 
-            
-           
+        if ($validasi) {
+            Murid::where('id', $getId)->delete();
+            return redirect('/daftar-murid')->with('deleted', 'Data Murid berhasil di hapus!.');
+        }
+
+        return redirect('/detail-murid/' . $getId)->with('fail', '');
+    }
+
+    public function uploadExcel(Request $request)
+    {
+        $request->validate([
+            'excelFile' => 'required|mimes:xlsx,xls|max:2048', // Validate file type and size
+        ]);
+
+        print($request->file('excelFile'));
+
+        $file = $request->file('excelFile');
+
+        try {
+            Excel::import(new MuridsImport, $file);
+
+            return redirect()->route('murids.index')->with('success', 'Data imported successfully!');
+        } catch (\Exception $e) {
+            return redirect()->back()->with('error', 'Error importing data. ' . $e->getMessage());
+        }
     }
 }

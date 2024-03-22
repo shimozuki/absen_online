@@ -44,6 +44,7 @@ Route::get('/fetch-data', [AbsensiController::class, 'fetchData']);
 Route::post('/scan-qr', [AbsensiController::class, 'store']);
 Route::get('/countresult', [AbsensiController::class, 'countResult']);
 Route::post('/izinsakit', [AbsensiController::class, 'izinsakit'])->name('izinsakit');
+Route::post('/upload-excel', [MuridController::class, 'uploadExcel'])->name('upload.excel');
 // Halaman Standalone-Scan
 Route::get('/scan-qr-standalone', function() {
     

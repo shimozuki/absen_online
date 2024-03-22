@@ -9,8 +9,7 @@ class Murid extends Model
 {
     use HasFactory;
 
-    // Ini untuk mengijinkan Laravel mengisi tabel database dengan nama berikut
-    // jika menggunakan tinker
+
     protected $guarded = ['id'];
     
     public function kelas()

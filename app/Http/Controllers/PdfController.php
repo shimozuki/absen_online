@@ -16,22 +16,16 @@ class PdfController extends Controller
 
     public function downloadKartuSatuan(Murid $murid)
     {
-        // Verifikasi untuk User yang login apakah dia Admin
         $verifikasiAdmin = new IsAdmin();
         $verifikasiAdmin->isAdmin();
+        $kosong = [];
 
-        // Jika status=1, maka akan lanjut kode di bawah
-        // Jika status != 1, maka akan 403 Forbidden
+        $qrCode = QrCode::size(200)->generate($murid->nis);
 
-        // Generate QR code
-        $qrCode = QrCode::size(80)->generate($murid->nis);
-
-        // Save the QR code image
-        $qrPath = public_path('qrcodes/Kartu-Absen-' . $murid->nis . '.png');
+        $qrPath = public_path('qrcodes/Kartu-Absen-' . $murid->nis . '.svg');
         file_put_contents($qrPath, $qrCode);
 
-        // Download the QR code image
-        return response()->download($qrPath, 'Kartu-Absen-' . $murid->nis . '.png')->deleteFileAfterSend(true);
+        return response()->download($qrPath, 'Kartu-Absen-' . $murid->nis . '.svg')->deleteFileAfterSend(true);
     }
 
 
